@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buku Tamu Digital Sekolah</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Signature Pad JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        /* Custom styles for the app */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Gradasi biru langit */
+            background: linear-gradient(to top right, #a1c4fd, #c2e9fb);
+        }
+        .form-container {
+            transition: all 0.3s ease;
+        }
+        .signature-canvas {
+            border: 2px dashed #ccc;
+            border-radius: 0.5rem;
+            cursor: crosshair;
+            touch-action: none; /* Penting untuk pengalaman di perangkat sentuh */
+        }
+        .notification {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease-in-out;
+        }
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="form-card" class="bg-white p-8 md:p-10 rounded-2xl shadow-2xl w-full max-w-2xl form-container">
+        
+        <!-- Header with School Logo -->
+        <div class="text-center mb-8">
+            <img src="https://www.koleksilogo.com/p/tips-for-creating-trendsetting-brand.html?url=aHR0cHM6Ly9ibG9nZ2VyLmdvb2dsZXVzZXJjb250ZW50LmNvbS9pbWcvYi9SMjl2WjJ4bC9BVnZYc0VncWlISXAyWnUtRnp0WnE1aVQzV2dkNm5nbS1ZV2ktczhMOXItOWFEOFRic1U3TUxDa2JYVm9IaWVmWDZjM1V4SW5uOFYwd3JfVDBBQXRER25SSW5GLTQ2R0dQOTNROEtOYmtYSEl1cUljYWxtbU4zbkIzY3RBdW1hNThsSGlDVVl0TVp2S3RCNUMzZ1NNVnkycC1iZ3F2YjlGNXBJdlVRWFU1MEFvcmJYZlB2WGZYMS1WSV9VWXhEaEkvczExMzQvR0tMNV9LdWJ1JTIwUmF5YSUyMC0lMjBLb2xla3NpbG9nby5jb20uanBn">
+            <h1 class="text-3xl font-bold text-gray-800">Buku Tamu Digital</h1>
+            <p class="text-gray-600">Selamat Datang! Silakan isi data kunjungan Anda.</p>
+        </div>
+
+        <form id="guest-form">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Kolom Nama Lengkap -->
+                <div>
+                    <label for="fullName" class="block mb-2 text-sm font-medium text-gray-700">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input type="text" id="fullName" name="fullName" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="Contoh: Budi Santoso" required>
+                </div>
+                <!-- Kolom Asal Instansi -->
+                <div>
+                    <label for="organization" class="block mb-2 text-sm font-medium text-gray-700">Asal Instansi/Perusahaan</label>
+                    <input type="text" id="organization" name="organization" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="Contoh: PT. Maju Jaya">
+                </div>
+                 <!-- Kolom Tujuan Kunjungan -->
+                <div>
+                    <label for="purpose" class="block mb-2 text-sm font-medium text-gray-700">Tujuan Kunjungan <span class="text-red-500">*</span></label>
+                    <input type="text" id="purpose" name="purpose" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="Contoh: Mengantar dokumen" required>
+                </div>
+                 <!-- Kolom Tanggal Kunjungan -->
+                <div>
+                    <label for="visitDate" class="block mb-2 text-sm font-medium text-gray-700">Tanggal Kunjungan</label>
+                    <input type="date" id="visitDate" name="visitDate" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                </div>
+            </div>
+
+            <!-- Kolom Tanda Tangan -->
+            <div class="mb-6">
+                <label class="block mb-2 text-sm font-medium text-gray-700">Tanda Tangan <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <canvas id="signature-canvas" class="signature-canvas w-full h-48 bg-gray-50"></canvas>
+                    <button type="button" id="clear-signature" class="absolute top-2 right-2 bg-gray-200 text-gray-600 hover:bg-gray-300 text-xs font-semibold py-1 px-2 rounded-md">Ulangi</button>
+                </div>
+                 <p class="mt-1 text-xs text-gray-500">Mohon bubuhkan tanda tangan di dalam kotak.</p>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <button type="submit" id="submit-button" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-lg w-full px-5 py-3 text-center transition-transform transform active:scale-95">
+                <span id="button-text">Simpan Kunjungan</span>
+                <span id="button-loader" class="hidden">
+                    <svg class="animate-spin h-5 w-5 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Area Notifikasi (Toast) -->
+    <div id="notification" class="notification max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+        <div class="p-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0" id="notification-icon">
+                    <!-- Icon will be inserted here -->
+                </div>
+                <div class="ml-3 w-0 flex-1 pt-0.5">
+                    <p class="text-sm font-medium text-gray-900" id="notification-title">Judul Notifikasi</p>
+                    <p class="mt-1 text-sm text-gray-500" id="notification-message">Pesan notifikasi.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // ===================================================================================
+        // PASTE URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
+        // ===================================================================================
+        const googleAppsScriptUrl = 'https://script.google.com/macros/s/AKfycbyR2ZjN_MSqcCji2IkcoLqysZ7-dHPX6ARxO2-QKUndvOvYUI6PR6zixCp1DQS3gRlchg/exec'; // <-- PASTE URL DI SINI
+        // ===================================================================================
+
+        // Inisialisasi Signature Pad
+        const canvas = document.getElementById('signature-canvas');
+        
+        // Mencegah menu klik kanan (context menu) muncul di area tanda tangan
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        const signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(249, 250, 251)' // Sesuai dengan bg-gray-50
+        });
+
+        // Fungsi untuk menyesuaikan ukuran canvas saat window di-resize
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear(); // Hapus tanda tangan saat resize
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        // Tombol untuk menghapus tanda tangan
+        document.getElementById('clear-signature').addEventListener('click', () => {
+            signaturePad.clear();
+        });
+
+        // Mengatur tanggal kunjungan hari ini secara default
+        document.getElementById('visitDate').valueAsDate = new Date();
+
+        // Logika Pengiriman Formulir
+        const form = document.getElementById('guest-form');
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+        const buttonLoader = document.getElementById('button-loader');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validasi URL Google Apps Script
+            if (!googleAppsScriptUrl) {
+                showNotification('error', 'Error Konfigurasi', 'URL Google Apps Script belum diatur. Silakan periksa file index.html.');
+                return;
+            }
+
+            // Validasi Tanda Tangan
+            if (signaturePad.isEmpty()) {
+                showNotification('error', 'Tanda Tangan Kosong', 'Mohon bubuhkan tanda tangan Anda sebelum menyimpan.');
+                canvas.style.borderColor = '#ef4444'; // Merah
+                setTimeout(() => { canvas.style.borderColor = '#ccc'; }, 2000);
+                return;
+            }
+
+            // Tampilkan loader dan nonaktifkan tombol
+            buttonText.classList.add('hidden');
+            buttonLoader.classList.remove('hidden');
+            submitButton.disabled = true;
+
+            // Kumpulkan data formulir
+            const formData = new FormData(form);
+            const data = {
+                fullName: formData.get('fullName'),
+                organization: formData.get('organization'),
+                purpose: formData.get('purpose'),
+                visitDate: formData.get('visitDate'),
+                // Konversi tanda tangan ke format Base64
+                signature: signaturePad.toDataURL('image/png')
+            };
+
+            try {
+                // Kirim data ke Google Apps Script menggunakan fetch
+                const response = await fetch(googleAppsScriptUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8', // Apps Script lebih baik menerima text/plain untuk doPost
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+
+                if (result.result === 'success') {
+                    showNotification('success', 'Berhasil!', 'Terima kasih, data kunjungan Anda telah tersimpan.');
+                    form.reset();
+                    signaturePad.clear();
+                    document.getElementById('visitDate').valueAsDate = new Date();
+                } else {
+                    throw new Error(result.message || 'Terjadi kesalahan saat menyimpan data.');
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                showNotification('error', 'Gagal Menyimpan', 'Terjadi masalah koneksi atau server. Silakan coba lagi.');
+            } finally {
+                // Sembunyikan loader dan aktifkan kembali tombol
+                buttonText.classList.remove('hidden');
+                buttonLoader.classList.add('hidden');
+                submitButton.disabled = false;
+            }
+        });
+
+        // Fungsi untuk menampilkan notifikasi (Toast)
+        function showNotification(type, title, message) {
+            const notification = document.getElementById('notification');
+            const iconContainer = document.getElementById('notification-icon');
+            const titleEl = document.getElementById('notification-title');
+            const messageEl = document.getElementById('notification-message');
+
+            let iconHtml = '';
+            if (type === 'success') {
+                iconHtml = `<svg class="h-6 w-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                notification.style.borderColor = '#4ade80';
+            } else {
+                iconHtml = `<svg class="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                 notification.style.borderColor = '#f87171';
+            }
+
+            iconContainer.innerHTML = iconHtml;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000); // Notifikasi akan hilang setelah 5 detik
+        }
+    </script>
+
+</body>
+</html>
+
